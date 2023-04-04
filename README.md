@@ -1,7 +1,7 @@
 # Davenport et al. study on parasite environmental transmission stage concentration and disease outbreaks
 ---
 
-The files include all the data and code used to create the figures in Davenport et al. Ecology Manuscript. Data collection was led by Elizabeth Davenport and supported by Marcin Dziuba, Logan Jacobson, Siobhan Calhoun, and Kira Monell. Figures were created by Elizabeth Davenport and Meghan Duffy of the University of Michigan. 
+The files include all the data and code used to create the figures in Davenport et al. manuscript. Data collection was led by Elizabeth Davenport and supported by Marcin Dziuba, Logan Jacobson, Siobhan Calhoun, and Kira Monell. Figures were created by Elizabeth Davenport and Meghan Duffy of the University of Michigan. 
 
 ## Description of the data and file structure
 
@@ -15,7 +15,7 @@ There are three main folders in the zip file:
 ## Sharing/Access information
 
 During the review process, data and code were posted at:
-** ADD LATER **
+(https://github.com/davenportlibby/SporesAndOutbreaks)
 
 # Spore Concentrations and Outbreak Data
 Data and code for 2021 field study led by Elizabeth Davenport
