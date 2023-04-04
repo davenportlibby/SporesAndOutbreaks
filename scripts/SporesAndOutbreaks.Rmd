@@ -1,0 +1,757 @@
+---
+title: "Parasite Spore Concentration and Disease Outbreaks"
+author: "Elizabeth Davenport"
+date: "April 2023"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+# Initial stuff, including loading packages and importing data
+
+##loading packages
+```{r,message=F,warning=F}
+library(tidyverse)
+library(here)
+library(ggpubr)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(reshape2)
+library(gridExtra)
+library(grid)
+```
+
+## loading files
+
+```{r,message=F,warning=F}
+# Tell R where files are stored
+here::i_am("scripts/SporesAndOutbreaks.Rmd")
+
+# Load Files
+a <- readr::read_csv(here("data/Walsh_Mean_Metsch_PercentInfected.csv"))
+b <- readr::read_csv(here("data/Pasteuria_Mean_Spores_and_Percent_Infected_Outbreak.csv"))
+c <- readr::read_csv(here("data/Brood_Mean_Spores_and_Percent_Infected_OutbreakSize.csv"))
+d <- readr::read_csv(here("data/MicG_Mean_Spores_and_Percent_Infected_OutbreakSize.csv"))
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,message=F,warning=F}
+# Creating a 13-panel figure depicting parasite spore concentration and percent infection of host populations over time
+
+# Setting color scheme for plot
+color <- c("Outbreak Start" = "black", "Spore Peak"="red","Mean Spore Concentration"="black",
+            "Dentifera Percent Infected"= "#0072B2","Parvula Percent Infected"="#D55E00",
+            "Retrocurva Percent Infected"= "#CC79A7","Pulicaria Percent Infected"= "#E69F00",
+            "Dubia Percent Infected"= "yellow3",  
+            "Cerio Percent Infected"="#009E73")
+
+# Setting shapes for plot
+shape <-c("Outbreak Start"=17, "Spore Peak"=8,"Mean Spore Concentration"=16,"Dentifera Percent Infected"= 15,
+         "Parvula Percent Infected"=9,"Retrocurva Percent Infected"=17, "Pulicaria Percent Infected"=18,
+         "Dubia Percent Infected"=5,"Cerio Percent Infected"=12)
+
+# Setting linetypes for plot
+lines <-c("Outbreak Start"="blank", "Spore Peak"="blank","Mean Spore Concentration"="solid",
+          "Dentifera Percent Infected"= "solid","Parvula Percent Infected"="solid",
+          "Retrocurva Percent Infected"="solid", "Pulicaria Percent Infected"="solid",
+          "Dubia Percent Infected"="solid","Cerio Percent Infected"="solid")
+
+# Walsh Lake - Metschnikowia bicuspidata
+Date <- a$datetime
+strptime(Date, format = "%m/%d/%y")
+l <- (as.POSIXct(Date,format="%m/%d/%y",tz=Sys.timezone()))
+Mean <- (a$Mean)
+LogMean <- (log10(Mean+1))
+PerInf <- a$PercentInfected
+
+metsch <- ggplot(a) +
+  geom_point(aes(x=l,y=LogMean, group=1, shape="Mean Spore Concentration", 
+                 color="Mean Spore Concentration"),size=3) +
+  geom_point(aes(x=l,y=PerInf, group=1,shape="Dentifera Percent Infected",
+                 color="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=l,y=PerInf, group=1, linetype="Dentifera Percent Infected",
+                color="Dentifera Percent Infected"), size=2)+
+  geom_smooth(aes(x=l,y=LogMean, linetype="Mean Spore Concentration",
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  scale_y_continuous(name="Log(Mean Spore Concentration+1)",
+                     sec.axis = sec_axis(~ .*1,
+                                         name="Percent Infected")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(aes(x = as.POSIXct(as.Date("2021-10-4")),shape="Spore Peak", 
+                 color="Spore Peak"), y=log10(44915.03571+1), size=5)+
+  geom_point(aes(x = as.POSIXct(as.Date("2021-09-20")),shape="Outbreak Start", 
+                 color="Outbreak Start"), y=log10(3347.55+1), size=7)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Walsh:"), bolditalic(" M. bicuspidata")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.text=element_text(size=24,face="bold"),
+        legend.position = "right",
+        legend.box.background = element_rect(colour = "black", size=4),
+        legend.title = element_blank())+
+  labs(x = (""))
+
+metsch
+```
+
+```{r,message=F,warning=F}
+# Bishop Lake - Pasteuria ramosa
+
+past.b = b %>%
+  filter(Lake== "Bishop")
+DatePB <- past.b$datetime
+strptime(DatePB, format = "%m/%d/%y")
+lPB <- as.POSIXct(DatePB,format="%m/%d/%y",tz=Sys.timezone())
+MeanPB <- past.b$Mean
+LogMeanPB <- log10(MeanPB+1)
+PerInfPB <- past.b$Dent_Per_Inf
+PerInfRPB <- past.b$Retro_Per_Inf
+ratio4PB = 1.5 * with(past.b, max(LogMeanPB)/max(PerInfRPB))
+
+past.bishop <- ggplot(past.b) +
+  geom_point(aes(x=lPB,y=LogMeanPB, group=1, shape="Mean Spore Concentration",
+                 color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lPB,y=LogMeanPB, group = 1, linetype="Mean Spore Concentration", 
+                  color="Mean Spore Concentration"), method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lPB,y=PerInfRPB*ratio4PB, group=1,shape="Retrocurva Percent Infected",
+                 color="Retrocurva Percent Infected"), size=6) +
+  geom_line(aes(x=lPB,y=PerInfRPB*ratio4PB, group=1, linetype="Retrocurva Percent Infected",
+                color="Retrocurva Percent Infected"), size=2)+
+  geom_point(aes(x=lPB,y=PerInfPB*ratio4PB, group=1,shape="Dentifera Percent Infected",
+                 color="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lPB,y=PerInfPB*ratio4PB, group=1, linetype="Dentifera Percent Infected",
+                color="Dentifera Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ ./ratio4PB,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+  
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-10-13")), y=log10(629.54688+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-08-18")), y=log10(242.1821429+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Bishop:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 20),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+past.bishop
+```
+
+```{r,message=F,warning=F}
+# Mill Lake - Pasteuria ramosa
+
+past.m = b %>%
+  filter(Lake== "Mill")
+
+DateMP <- past.m$datetime
+strptime(DateMP, format = "%m/%d/%y")
+lMP <- as.POSIXct(DateMP,format="%m/%d/%y",tz=Sys.timezone())
+MeanMP <- past.m$Mean
+LogMeanMP <- log10(MeanMP+1)
+PerInfMP <- past.m$Dent_Per_Inf
+PerInfPMP <- past.m$Parv_Per_Inf
+PerInfRMP <- past.m$Retro_Per_Inf
+
+past.mill <- ggplot(past.m) +
+  geom_point(aes(x=lMP,y=LogMeanMP, group=1, shape="Mean Spore Concentration", 
+                 color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lMP,y=LogMeanMP, group = 1, linetype="Mean Spore Concentration", 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lMP,y=PerInfRMP, group=1,shape="Retrocurva Percent Infected",
+                 color="Retrocurva Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMP,y=PerInfRMP, group=1, linetype="Retrocurva Percent Infected",
+                color="Retrocurva Percent Infected"), size=2)+
+  geom_point(aes(x=lMP,y=PerInfMP, group=1,shape="Dentifera Percent Infected",
+                 color="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMP,y=PerInfMP, group=1, linetype="Dentifera Percent Infected",
+                color="Dentifera Percent Infected"), size=2)+
+  geom_point(aes(x=lMP,y=PerInfPMP, group=1,shape="Parvula Percent Infected",
+                 color="Parvula Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMP,y=PerInfPMP, group=1,linetype="Parvula Percent Infected",
+                color="Parvula Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ .*1,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-20")), y=log10(5203.50218+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-08-23")), y=log10(1543.241333+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Mill:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 22),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+past.mill
+```
+
+```{r,message=F,warning=F}
+# Crooked W Lake - Pasteuria ramosa
+
+past.cw = b %>%
+  filter(Lake== "CrookedW")
+DatePCW <- past.cw$datetime
+strptime(DatePCW, format = "%m/%d/%y")
+lPCW <- as.POSIXct(DatePCW,format="%m/%d/%y",tz=Sys.timezone())
+MeanPCW <- past.cw$Mean
+LogMeanPCW <- log10(MeanPCW+1)
+PerInfRPCW <- past.cw$Retro_Per_Inf
+ratio4PCW = 1.5 * with(past.cw, max(LogMeanPCW)/max(PerInfRPCW))
+
+past.crookedw <- ggplot(past.cw) +
+  geom_point(aes(x=lPCW,y=LogMeanPCW, group=1, 
+                 color="Mean Spore Concentration", shape="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lPCW,y=LogMeanPCW, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lPCW,y=PerInfRPCW*ratio4PCW, group=1,
+                 color="Retrocurva Percent Infected", shape="Retrocurva Percent Infected"), size=4.5) +
+  geom_line(aes(x=lPCW,y=PerInfRPCW*ratio4PCW, group=1,
+                color="Retrocurva Percent Infected", linetype="Retrocurva Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ ./ratio4PCW,
+                                         name="Percent Infected")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-13")), y=log10(147.12143+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-10-25")), y=log10(73.71428571+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Crooked W:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 22),
+        legend.text=element_text(size=20,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+past.crookedw
+```
+
+```{r,message=F,warning=F}
+# Little Appleton - Pasteuria ramosa
+
+past.la = b %>%
+  filter(Lake== "LilAp")
+DatePLA <- past.la$datetime
+strptime(DatePLA, format = "%m/%d/%y")
+lPLA <- as.POSIXct(DatePLA,format="%m/%d/%y",tz=Sys.timezone())
+MeanPLA <- past.la$Mean
+PerInfPLA <- past.la$Dent_Per_Inf
+LogMeanPLA <- log10(MeanPLA+1)
+PerInfCPLA <- past.la$Cerio_Per_Inf
+ratio2PLA = 1.5 * with(past.la, max(LogMeanPLA)/max(PerInfPLA))
+
+
+past.lilap <- ggplot(past.la) +
+  geom_point(aes(x=lPLA,y=LogMeanPLA, group=1, 
+                 color="Mean Spore Concentration", shape="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lPLA,y=LogMeanPLA, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lPLA,y=PerInfPLA*ratio2PLA, group=1,
+                 color="Dentifera Percent Infected", shape="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lPLA,y=PerInfPLA*ratio2PLA, group=1,
+                color="Dentifera Percent Infected", linetype="Dentifera Percent Infected"), size=2)+
+  geom_point(aes(x=lPLA,y=PerInfCPLA*ratio2PLA, group=1,
+                 color="Cerio Percent Infected", shape="Cerio Percent Infected"), size=4.5) +
+  geom_line(aes(x=lPLA,y=PerInfCPLA*ratio2PLA, group=1,
+                color="Cerio Percent Infected", linetype="Cerio Percent Infected"), size=2)+
+  scale_y_continuous(name="Log(Mean Spore Concentration+1)",
+                     sec.axis = sec_axis(~ ./ratio2PLA,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-15")), y=log10(396.21429+1), 
+             color = "black", size=7, shape=17)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-15")), y=log10(396.21429+1), 
+             color = "red", size=5, shape=8)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Little Appleton:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 24),
+        legend.text=element_text(size=24,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+past.lilap
+```
+
+```{r,message=F,warning=F}
+# Cedar Lake - Blastulidium paedophthorum
+brood.c = c %>%
+  filter(Lake== "Cedar")
+DateBC <- brood.c$datetime
+strptime(DateBC, format = "%m/%d/%y")
+lBC <- as.POSIXct(DateBC,format="%m/%d/%y",tz=Sys.timezone())
+MeanBC <- brood.c$Mean
+LogMeanBC <- log10(MeanBC+1)
+PerInfPulBC <- brood.c$Pulic_Per_Inf
+
+brood.cedar <- ggplot(brood.c) +
+  geom_point(aes(x=lBC,y=LogMeanBC, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lBC,y=LogMeanBC, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lBC,y=PerInfPulBC, group=1,
+                 color="Pulicaria Percent Infected", shape="Pulicaria Percent Infected"), size=6) +
+  geom_line(aes(x=lBC,y=PerInfPulBC, group=1,
+                color="Pulicaria Percent Infected", linetype="Pulicaria Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ .*1,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-10-11")), y=log10(33461.767+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-07-06")), y=log10(2894.207143+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Cedar:"), bolditalic(" B. paedophthorum")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 24),
+        legend.text=element_text(size=24,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+brood.cedar
+```
+
+```{r,message=F,warning=F}
+# Bishop Lake - Blastulidium paedophtorum
+
+brood.b = c %>%
+  filter(Lake== "Bishop")
+DateBB <- brood.b$datetime
+strptime(DateBB, format = "%m/%d/%y")
+lBB <- as.POSIXct(DateBB,format="%m/%d/%y",tz=Sys.timezone())
+MeanBB <- brood.b$Mean
+LogMeanBB <- log10(MeanBB+1)
+PerInfCBB <- brood.b$Cerio_Per_Inf
+PerInfDBB <- brood.b$Dubia_Per_Inf
+
+brood.bishop <- ggplot(brood.b) +
+  geom_point(aes(x=lBB,y=LogMeanBB, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lBB,y=LogMeanBB, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lBB,y=PerInfCBB, group=1,
+                 color="Cerio Percent Infected",shape="Cerio Percent Infected"), size=4.5) +
+  geom_line(aes(x=lBB,y=PerInfCBB, group=1,
+                color="Cerio Percent Infected", linetype="Cerio Percent Infected"), size=2)+
+  geom_point(aes(x=lBB,y=PerInfDBB, group=1,
+                 color="Dubia Percent Infected", shape="Dubia Percent Infected"), size=3) +
+  geom_line(aes(x=lBB,y=PerInfDBB, group=1,
+                color="Dubia Percent Infected", linetype="Dubia Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ .*1,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-29")), y=log10(57380.71765+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-15")), y=log10(27776.57847+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Bishop:"), bolditalic(" B. paedophthorum")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 20),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+brood.bishop
+```
+
+```{r,message=F,warning=F}
+# Walsh Lake - Blastulidium paedophthorum
+
+brood.w = c %>%
+  filter(Lake== "Walsh")
+DateBW <- brood.w$datetime
+strptime(DateBW, format = "%m/%d/%y")
+lBW <- as.POSIXct(DateBW,format="%m/%d/%y",tz=Sys.timezone())
+MeanBW <- brood.w$Mean
+LogMeanBW <- log10(MeanBW+1)
+PerInfPBW <- brood.w$Parv_Per_Inf
+
+brood.walsh <- ggplot(brood.w) +
+  geom_point(aes(x=lBW,y=LogMeanBW, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lBW,y=LogMeanBW, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lBW,y=PerInfPBW, group=1,
+                 color="Parvula Percent Infected", shape="Parvula Percent Infected"), size=4.5) +
+  geom_line(aes(x=lBW,y=PerInfPBW, group=1,
+                color="Parvula Percent Infected", linetype="Parvula Percent Infected"), size=2)+
+  scale_y_continuous(name="Log(Mean Spore Concentration+1)",
+                     sec.axis = sec_axis(~ .*1,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-20")), y=log10(13684.13571+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-08-23")), y=log10(12963.92308+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Walsh:"), bolditalic(" B. paedophthorum")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 20),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+brood.walsh
+```
+
+```{r,message=F,warning=F}
+# Walsh Lake - Ordospora pajunii
+
+micg.w = d %>%
+  filter(Lake== "Walsh")
+DateMW <- micg.w$datetime
+strptime(DateMW, format = "%m/%d/%y")
+lMW <- as.POSIXct(DateMW,format="%m/%d/%y",tz=Sys.timezone())
+MeanMW <- micg.w$Mean
+LogMeanMW <- log10(MeanMW+1)
+PerInfMW <- micg.w$Dent_Per_Inf
+ratio2MW = 1.5 * with(micg.w, max(LogMeanMW)/max(PerInfMW))
+
+micg.walsh <- ggplot(micg.w) +
+  geom_point(aes(x=lMW,y=LogMeanMW, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lMW,y=LogMeanMW, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lMW,y=PerInfMW*ratio2MW, group=1,
+                 color="Dentifera Percent Infected",shape="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMW,y=PerInfMW*ratio2MW, group=1,
+                color="Dentifera Percent Infected",linetype="Dentifera Percent Infected"), size=2)+
+  scale_y_continuous(name="Log(Mean Spore Concentration+1)",
+                     sec.axis = sec_axis(~ ./ratio2MW,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-10-4")), y=log10(378846.8929+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-07-12")), y=log10(82.56+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Walsh:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 24),
+        legend.text=element_text(size=20,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+micg.walsh
+```
+
+```{r,message=F,warning=F}
+# Bishop Lake - Ordospora pajunii
+micg.b = d %>%
+  filter(Lake== "Bishop")
+DateMB <- micg.b$datetime
+strptime(DateMB, format = "%m/%d/%y")
+lMB <- as.POSIXct(DateMB,format="%m/%d/%y",tz=Sys.timezone())
+MeanMB <- micg.b$Mean
+LogMeanMB <- log10(MeanMB+1)
+PerInfMB <- micg.b$Dent_Per_Inf
+ratio2MB = 1.5 * with(micg.b, max(LogMeanMB)/max(PerInfMB))
+
+micg.bishop <- ggplot(micg.b) +
+  geom_point(aes(x=lMB,y=LogMeanMB, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lMB,y=LogMeanMB, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lMB,y=PerInfMB*ratio2MB, group=1,
+                 color="Dentifera Percent Infected", shape="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMB,y=PerInfMB*ratio2MB, group=1,
+                color="Dentifera Percent Infected", linetype="Dentifera Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ ./ratio2MB,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-8-18")), y=log10(903.76786+1), 
+             color = "red", size=5,shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-07-07")), y=log10(116.8166667+1), 
+             color = "black", size=7,shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Bishop:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 24),
+        legend.text=element_text(size=24,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+micg.bishop
+```
+
+```{r,message=F,warning=F}
+# Cedar Lake - Ordospora pajunii
+micg.c = d %>%
+  filter(Lake== "Cedar")
+DateMC <- micg.c$datetime
+strptime(DateMC, format = "%m/%d/%y")
+lMC <- as.POSIXct(DateMC,format="%m/%d/%y",tz=Sys.timezone())
+MeanMC <- micg.c$Mean
+LogMeanMC <- log10(MeanMC+1)
+PerInfMC <- micg.c$Dent_Per_Inf
+ratio2MC = 1.5 * with(micg.c, max(LogMeanMC)/max(PerInfMC))
+
+micg.cedar <- ggplot(micg.c) +
+  geom_point(aes(x=lMC,y=LogMeanMC, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lMC,y=LogMeanMC, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lMC,y=PerInfMC*ratio2MC, group=1,
+                 color="Dentifera Percent Infected", shape="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMC,y=PerInfMC*ratio2MC, group=1,
+                color="Dentifera Percent Infected", linetype="Dentifera Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ ./ratio2MC,
+                                         name="Percent Infected")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-8-16")), y=log10(4092.4344+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-07-06")), y=log10(440.1357143+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Cedar:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 24),
+        legend.text=element_text(size=24,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+micg.cedar
+```
+
+```{r,message=F,warning=F}
+# Crooked W Lake - Ordospora pajunii
+micg.cw = d %>%
+  filter(Lake== "CrookedW")
+DateMCW <- micg.cw$datetime
+strptime(DateMCW, format = "%m/%d/%y")
+lMCW <- as.POSIXct(DateMCW,format="%m/%d/%y",tz=Sys.timezone())
+MeanMCW <- micg.cw$Mean
+LogMeanMCW <- log10(MeanMCW+1)
+PerInfMCW <- micg.cw$Dent_Per_Inf
+ratio2MCW = 1.5 * with(micg.cw, max(LogMeanMCW)/max(PerInfMCW))
+
+
+micg.crookedw <- ggplot(micg.cw) +
+  geom_point(aes(x=lMCW,y=LogMeanMCW, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lMCW,y=LogMeanMCW, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lMCW,y=PerInfMCW*ratio2MCW, group=1,
+                 color="Dentifera Percent Infected", shape="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMCW,y=PerInfMCW*ratio2MCW, group=1,
+                color="Dentifera Percent Infected", linetype="Dentifera Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ ./ratio2MCW,
+                                         name="Percent Infected")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-8-16")), y=log10(4709.25250+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-07-06")), y=log10(1405.5625+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Crooked W:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 24),
+        legend.text=element_text(size=24,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+micg.crookedw
+```
+
+```{r,message=F,warning=F}
+# Mill Lake - Ordospora pajunii
+
+micg.m = d %>%
+  filter(Lake== "Mill")
+DateMM <- micg.m$datetime
+strptime(DateMM, format = "%m/%d/%y")
+lMM <- as.POSIXct(DateMM,format="%m/%d/%y",tz=Sys.timezone())
+MeanMM <- micg.m$Mean
+LogMeanMM <- log10(MeanMM+1)
+PerInfMM <- micg.m$Dent_Per_Inf
+ratio2MM = 1.5 * with(micg.m, max(LogMeanMM)/max(PerInfMM))
+
+micg.mill <- ggplot(micg.m) +
+  geom_point(aes(x=lMM,y=LogMeanMM, group=1, color="Mean Spore Concentration"), size=3) +
+  geom_smooth(aes(x=lMM,y=LogMeanMM, group = 1, 
+                  color="Mean Spore Concentration"),method = "loess", size = 2, span=.5, se=FALSE)+
+  geom_point(aes(x=lMM,y=PerInfMM*ratio2MM, group=1,
+                 color="Dentifera Percent Infected", shape="Dentifera Percent Infected"), size=4.5) +
+  geom_line(aes(x=lMM,y=PerInfMM*ratio2MM, group=1,
+                color="Dentifera Percent Infected", linetype="Dentifera Percent Infected"), size=2)+
+  scale_y_continuous(name="",
+                     sec.axis = sec_axis(~ ./ratio2MM,
+                                         name="")) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(name="",values = color)+
+  scale_shape_manual(name="",values = shape)+
+  scale_linetype_manual(name="",values=lines)+
+  geom_point(x = as.POSIXct(as.Date("2021-9-20")), y=log10(8250.4561+1), 
+             color = "red", size=5, shape=8)+
+  geom_point(x = as.POSIXct(as.Date("2021-08-09")), y=log10(534.06+1), 
+             color = "black", size=7, shape=17)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Mill:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 20)) +
+  theme(axis.text=element_text(size=16, face = "bold"), 
+        axis.title=element_text(size=18,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 16),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +
+  labs(x = (""))
+
+micg.mill
+```
+
+```{r,message=F,warning=F}
+blank <- ggplot()+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+```{r,message=F,warning=F}
+leg <- get_legend(metsch)
+metsch <- metsch + theme(legend.position = "none")
+combined = ggarrange(brood.walsh, brood.bishop, brood.cedar, micg.cedar, 
+                     micg.walsh, micg.bishop, micg.mill,micg.crookedw,
+                     past.lilap, past.bishop, past.mill, past.crookedw, 
+                     metsch, blank, leg,
+                     nrow = 4, ncol = 4, widths = c(1,1,1,1,
+                                                    1,1,1,1,
+                                                    1,1,1,1,
+                                                    1,1,2))
+
+
+combined = annotate_figure(combined,
+                           left = text_grob("     Obligate Killers                                  Continuous Shedders", color = "#0072B2", face = "bold", size = 40,rot=90),
+                           top = text_grob("", color = "black", face = "bold", size = 30))+
+  annotation_custom(
+    grid.polygon(x=c(0,1),
+                 y=c(0.5,0.5),
+                 gp = gpar(lwd = 5)))
+combined
+
+#### saving combined plot
+ggsave(here("figures", "Combined_Plot_Spore_Concentration_And_Infection_Prevalence.jpg"), combined, units = "in", width = 20, height = 20, dpi = 300)
+
+```
+

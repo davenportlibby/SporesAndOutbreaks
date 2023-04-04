@@ -1,0 +1,191 @@
+---
+title: "Spore Increase and Peak Timing"
+author: "Elizabeth Davenport"
+date: '2023-03-31'
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Initial stuff, including loading packages and importing data
+
+##loading packages
+```{r,message=F,warning=F}
+library(tidyverse)
+library(here)
+library(ggpubr)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(reshape2)
+library(gridExtra)
+library(grid)
+```
+
+## loading files
+
+```{r,message=F,warning=F}
+# Tell R where files are stored
+here::i_am("scripts/SporeIncreaseAndPeakTiming.Rmd")
+
+# Load Files
+a <- readr::read_csv(here("data/AvgDaysBetweenSporeIncreaseAndOutbreakStart.csv"))
+b <- readr::read_csv(here("data/DaysBetweenPeaks.csv"))
+```
+
+
+## Creating a figure showing the average number of days between initial spore increase and outbreak peak
+
+```{r,message=F,warning=F}
+Days<-a$DaysBetweenSporeIncreaseAndOutbreakStart
+Lake<-a$Lake
+ParasiteSpecies<-a$Parasite
+
+#create data frame
+df<- data.frame(ParasiteSpecies,Lake,Days)
+
+# calculate mean number of days between initial spore increase and outbreak start
+means<- df %>%
+  group_by(ParasiteSpecies) %>%
+  summarise_at(vars(Days), list(name="mean"))
+
+# calculate standard deviation
+SD<- df%>%
+  group_by(ParasiteSpecies) %>%
+  summarise_at(vars(Days), list(name="sd"))
+
+# merge mean and SD values for each parasite species
+total <- merge(means,SD,by="ParasiteSpecies")
+total<- total %>%
+  rename(mean=name.x,sd=name.y)
+
+levels(total$ParasiteSpecies) <- c("B. paedophthorum", "M. bicuspidata", "O. pajunii", "P. ramosa")
+levels(df$ParasiteSpecies) <- c("B. paedophthorum", "M. bicuspidata", "O. pajunii", "P. ramosa")
+
+color <- c("B. paedophthorum"="#D55E00",
+            "O. pajunii"= "#0072B2",
+            "P. ramosa"= "#CC79A7",  
+            "M. bicuspidata"="#009E73")
+
+AvgTimeDiff <- ggplot() +
+  geom_point(data=df,aes(x=ParasiteSpecies,y=Days, group=ParasiteSpecies, 
+                         color=ParasiteSpecies), size=4, alpha=.5) +
+  geom_point(data=total, aes(x=ParasiteSpecies,y=mean, group=ParasiteSpecies, 
+                             color=ParasiteSpecies), size=8) +
+  geom_errorbar(data=total,aes(x=ParasiteSpecies,ymin=mean-sd, ymax=mean+sd), width=.3,
+                position=position_dodge(0.05))+
+  geom_jitter(width = .1)+
+  scale_x_discrete(limits=c("B. paedophthorum", "O. pajunii", "M. bicuspidata", "P. ramosa"))+
+  geom_hline(yintercept=0, linetype="dotted", size=2.5)+
+  scale_y_continuous(limits = c(-60,5), breaks = seq(-60,5,10))+
+  scale_colour_manual(values = color)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle("Average Number of Days between Initial \nSpore Increase and Outbreak Emergence") +
+  theme(plot.title = element_text(face = "bold",size = 16)) +
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(axis.text=element_text(size=12, face = "bold"), 
+        axis.title=element_text(size=14,face="bold")) +
+  theme(legend.position = "none") +
+  labs(x = (""), y=("Time (days)"))+
+  annotate(geom="text", x=3.5, y=-2, label="Spores increase earlier", size=5,
+           color="black")+
+  annotate(geom="text", x=0.7, y=5, label="(A)", size=10,
+           color="black")
+
+AvgTimeDiff=annotate_figure(AvgTimeDiff,bottom = text_grob("Continuous Shedders                  Obligate Killers",
+                                                           color = "black", face = "bold", size = 14))+
+  annotation_custom(
+    grid.polygon(x=c(0.53,0.53),
+                 y=c(0,0.9),
+                 gp = gpar(lwd = 5)))
+
+AvgTimeDiff
+```
+
+
+## Creating a figure showing the average number of days between the peak in spore concentration and the peak in infections for each parasite
+```{r,message=F,warning=F}
+PeakDays<-b$DaysBetweenPeaks
+PeakLake<-b$Lake
+PeakParasiteSpecies<-b$Parasite
+
+## creating a data frame
+Peakdf<- data.frame(PeakParasiteSpecies,PeakLake,PeakDays)
+
+## calculating the mean number of days between the peak in spore concentration and the peak in infections for each parasite
+Peakmeans<- Peakdf %>%
+  group_by(PeakParasiteSpecies) %>%
+  summarise_at(vars(PeakDays), list(name="mean"))
+
+## calculating standard deviation
+PeakSD<- Peakdf%>%
+  group_by(PeakParasiteSpecies) %>%
+  summarise_at(vars(PeakDays), list(name="sd"))
+
+## merging means and standard deviations
+Peaktotal <- merge(Peakmeans,PeakSD,by="PeakParasiteSpecies")
+Peaktotal<- Peaktotal %>%
+  rename(Peakmean=name.x,Peaksd=name.y)
+
+levels(Peaktotal$PeakParasiteSpecies) <- c("B. paedophthorum", "M. bicuspidata", "O. pajunii", "P. ramosa")
+levels(Peakdf$PeakParasiteSpecies) <- c("B. paedophthorum", "M. bicuspidata", "O. pajunii", "P. ramosa")
+
+AvgTimeDiffPeaks <- ggplot() +
+  geom_point(data=Peakdf,aes(x=PeakParasiteSpecies,y=PeakDays, group=PeakParasiteSpecies,
+                             color=PeakParasiteSpecies), size=4, alpha=.5) + 
+  geom_point(data=Peaktotal, aes(x=PeakParasiteSpecies,y=Peakmean, group=PeakParasiteSpecies,
+                                 color=PeakParasiteSpecies), size=8) +
+  geom_errorbar(data=Peaktotal,aes(x=PeakParasiteSpecies,ymin=Peakmean-Peaksd, ymax=Peakmean+Peaksd), width=.3,
+                position=position_dodge(0.05))+
+  geom_jitter(width = .1)+
+  scale_y_continuous(limits = c(-50,100), breaks = seq(-50,100,25))+
+  geom_hline(yintercept=0, linetype="dotted", size=2.5)+
+  scale_x_discrete(limits=c("B. paedophthorum", "O. pajunii", "M. bicuspidata", "P. ramosa"))+
+  scale_colour_manual(values = color)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle("Average Number of Days between \nSpore Peak and Outbreak Peak") +
+  theme(plot.title = element_text(face = "bold",size = 16)) +
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(axis.text=element_text(size=12, face = "bold"), 
+        axis.title=element_text(size=14,face="bold")) +
+  theme(legend.position = "none") +
+  labs(x = (""), y=("Time (days)"))+
+  annotate(geom="text", x=0.7, y=100, label="(B)", size=10,
+           color="black")
+
+AvgTimeDiffPeaks=annotate_figure(AvgTimeDiffPeaks,bottom = text_grob("Continuous Shedders                  Obligate Killers",
+                                                                     color = "black", face = "bold", size = 14),
+                                 right=text_grob("Spores Peak Later    Spores Peak Earlier",
+                                                 color="black",size=13,rot=-90, hjust = 0.32))+
+  annotation_custom(
+    grid.polygon(x=c(0.52,0.52),
+                 y=c(0,0.9),
+                 gp = gpar(lwd = 5)))
+
+AvgTimeDiffPeaks
+
+```
+
+
+## Combining plots
+```{r,message=F,warning=F}
+combined = ggarrange(AvgTimeDiff,AvgTimeDiffPeaks,
+                     nrow = 1, ncol = 2)
+combined
+
+ggsave(here("figures", "Combined_SporeIncrease_and_Peak_Timing.jpg"), combined, units = "in", width = 13, height = 6, dpi = 300)
+
+```

@@ -1,0 +1,721 @@
+---
+title: "Host Density and Outbreaks"
+author: "Elizabeth Davenport"
+date: "April 2023"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Initial stuff, including loading packages and importing data
+
+##loading packages
+```{r,message=F,warning=F}
+library(tidyverse)
+library(here)
+library(ggpubr)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(reshape2)
+library(gridExtra)
+library(grid)
+```
+
+## loading files
+
+```{r,message=F,warning=F}
+# Tell R where files are stored
+here::i_am("scripts/HostDensityAndOutbreaks.Rmd")
+
+# Load Files
+a <- readr::read_csv(here("data/Clean_Data_2021_Lakes_All_Host_Densities.csv"))
+
+```
+
+
+## Creating a 13-panel figure depicting total host density and infected host density over time
+
+```{r,message=F,warning=F}
+# Setting color scheme
+cols2<-c("Retrocurva Infected Density"="#CC79A7", "Dentifera Infected Density"="#0072B2", 
+         "Parvula Infected Density"="#D55E00","Cerio Infected Density"="#009E73",
+         "Dubia Infected Density"="yellow3", "Pulicaria Infected Density"="#E69F00")
+cols<-c("Retrocurva Total Density"="#CC79A7", "Dentifera Total Density"="#0072B2",
+        "Parvula Total Density"="#D55E00","Cerio Total Density"="#009E73",
+        "Dubia Total Density"="yellow3", "Pulicaria Total Density"="#E69F00")
+
+# Bishop Lake - Ordospora pajunii
+MicGbishop = a %>%
+  filter(Host.Species=="dentifera", 
+         Lake== "Bishop")
+
+MicGBishopDate <- MicGbishop$Date
+strptime(MicGBishopDate, format = "%m/%d/%y")
+MicGBishopl <- as.POSIXct(MicGBishopDate,format="%m/%d/%y",tz=Sys.timezone())
+MicGBishopDentiferaTot<-MicGbishop$Dentifera.density
+BishopMicG<-MicGbishop$micG.inf.density
+
+bishop.micG <- ggplot() +
+  geom_point(data=MicGbishop,aes(x=MicGBishopl,y=log10(MicGBishopDentiferaTot+1), group=1, 
+                                 color="Dentifera Total Density"), size=3) +
+  geom_line(data=MicGbishop,aes(x=MicGBishopl,y=log10(MicGBishopDentiferaTot+1), group=1, 
+                                color="Dentifera Total Density"), size=2)+
+  geom_area(data=MicGbishop,aes(x=MicGBishopl,y=log10(BishopMicG+1), group=1, 
+                                fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Bishop:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 24),
+        legend.text=element_text(size=24,face="bold"),
+        legend.position = "bottom") +  
+  labs(x = (""), y="Density", color="Color",fill="Fill")+
+  guides(color=guide_legend(ncol=1,byrow=FALSE))+
+  guides(fill=guide_legend(ncol=1,byrow=FALSE))
+
+bishop.micG
+```
+
+```{r,message=F,warning=F}
+# Mill Lake - Ordospora pajunii
+MicGMill = a %>%
+  filter(Host.Species=="dentifera", 
+         Lake== "Mill")
+
+MicGMillDate <- MicGMill$Date
+strptime(MicGMillDate, format = "%m/%d/%y")
+MicGMilll <- as.POSIXct(MicGMillDate,format="%m/%d/%y",tz=Sys.timezone())
+MicGMillDentiferaTot<-MicGMill$Dentifera.density
+MillMicG<-MicGMill$micG.inf.density
+
+mill.micG <- ggplot() +
+  geom_point(data=MicGMill,aes(x=MicGMilll,y=log10(MicGMillDentiferaTot+1), group=1, 
+                               color="Dentifera Total Density"), size=3) +
+  geom_line(data=MicGMill,aes(x=MicGMilll,y=log10(MicGMillDentiferaTot+1), group=1, 
+                              color="Dentifera Total Density"), size=2)+
+  geom_area(data=MicGMill,aes(x=MicGMilll,y=log10(MillMicG+1), group=1, 
+                              fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Mill:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=1,byrow=TRUE))+
+  guides(color=guide_legend(nrow=1,byrow=TRUE))
+
+mill.micG
+```
+
+```{r,message=F,warning=F}
+# Crooked W Lake - Ordospora pajunii
+MicGCrookedW = a %>%
+  filter(Host.Species=="dentifera", 
+         Lake== "CrookedW")
+
+MicGCrookedWDate <- MicGCrookedW$Date
+strptime(MicGCrookedWDate, format = "%m/%d/%y")
+MicGCrookedWl <- as.POSIXct(MicGCrookedWDate,format="%m/%d/%y",tz=Sys.timezone())
+MicGCrookedWDentTot<-MicGCrookedW$Dentifera.density
+CrookedWMicG<-MicGCrookedW$micG.inf.density
+
+crookedw.micG <- ggplot(MicGCrookedW) +
+  geom_point(aes(x=MicGCrookedWl,y=log10(MicGCrookedWDentTot+1), group=1, 
+                 color="Dentifera Total Density"), size=3) +
+  geom_line(aes(x=MicGCrookedWl,y=log10(MicGCrookedWDentTot+1), group=1, 
+                color="Dentifera Total Density"), size=2)+
+  geom_area(aes(x=MicGCrookedWl,y=log10(CrookedWMicG+1), group=1, 
+                fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Crooked W:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=1,byrow=TRUE))+
+  guides(color=guide_legend(nrow=1,byrow=TRUE))
+
+crookedw.micG
+```
+
+```{r,message=F,warning=F}
+# Cedar Lake - Ordospora pajunii
+MicGCedar = a %>%
+  filter(Host.Species=="dentifera", 
+         Lake== "Cedar")
+
+MicGCedarDate <- MicGCedar$Date
+strptime(MicGCedarDate, format = "%m/%d/%y")
+MicGCedarl <- as.POSIXct(MicGCedarDate,format="%m/%d/%y",tz=Sys.timezone())
+MicGCedarDentTot<-MicGCedar$Dentifera.density
+CedarMicG<-MicGCedar$micG.inf.density
+
+cedar.micG <- ggplot(MicGCedar) +
+  geom_point(aes(x=MicGCedarl,y=log10(MicGCedarDentTot+1), group=1, color="Dentifera Total Density"), size=3) +
+  geom_line(aes(x=MicGCedarl,y=log10(MicGCedarDentTot+1), group=1, color="Dentifera Total Density"), size=2)+
+  geom_area(aes(x=MicGCedarl,y=log10(CedarMicG+1), group=1, fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Cedar:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=1,byrow=TRUE))+
+  guides(color=guide_legend(nrow=1,byrow=TRUE))
+
+cedar.micG
+```
+
+```{r,message=F,warning=F}
+# Walsh Lake - Ordospora pajunii
+MicGWalsh = a %>%
+  filter(Host.Species=="dentifera", 
+         Lake== "Walsh")
+
+MicGWalshDate <- MicGWalsh$Date
+strptime(MicGWalshDate, format = "%m/%d/%y")
+MicGWalshl <- as.POSIXct(MicGWalshDate,format="%m/%d/%y",tz=Sys.timezone())
+MicGWalshDentTot<-MicGWalsh$Dentifera.density
+WalshMicG<-MicGWalsh$micG.inf.density
+
+walsh.micG <- ggplot() +
+  geom_point(data=MicGWalsh,aes(x=MicGWalshl,y=log10(MicGWalshDentTot+1), group=1, 
+                                color="Dentifera Total Density"), size=3) +
+  geom_line(data=MicGWalsh,aes(x=MicGWalshl,y=log10(MicGWalshDentTot+1), group=1, 
+                               color="Dentifera Total Density"), size=2)+
+  geom_area(data=MicGWalsh,aes(x=MicGWalshl,y=log10(WalshMicG+1), group=1, 
+                               fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Walsh:"), bolditalic(" O. pajunii")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=1,byrow=TRUE))+
+  guides(color=guide_legend(nrow=1,byrow=TRUE))
+
+walsh.micG
+
+```
+
+```{r,message=F,warning=F}
+# Walsh Lake - Metschnikowia bicuspidata
+MetschWalsh = a %>%
+  filter(Host.Species=="dentifera", 
+         Lake== "Walsh")
+
+MetschWalshDate <- MetschWalsh$Date
+strptime(MetschWalshDate, format = "%m/%d/%y")
+MetschWalshl <- as.POSIXct(MetschWalshDate,format="%m/%d/%y",tz=Sys.timezone())
+MetschWalshDentTot<-MetschWalsh$Dentifera.density
+WalshMetsch<-MetschWalsh$metsch.inf.density
+
+walsh.metsch <- ggplot() +
+  geom_point(data=MetschWalsh,aes(x=MetschWalshl,y=log10(MetschWalshDentTot+1), group=1, 
+                                  color="Dentifera Total Density"), size=3) +
+  geom_line(data=MetschWalsh,aes(x=MetschWalshl,y=log10(MetschWalshDentTot+1), group=1, 
+                                 color="Dentifera Total Density"), size=2)+
+  geom_area(data=MetschWalsh,aes(x=MetschWalshl,y=log10(WalshMetsch+1), group=1, 
+                                 fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Walsh:"), bolditalic(" M. bicuspidata")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")
+
+walsh.metsch
+```
+
+```{r,message=F,warning=F}
+# Bishop Lake - Pasteuria ramosa
+Pastbishop = a %>%
+  filter(Host.Species=="retrocurva"| Host.Species=="dentifera", 
+         Lake== "Bishop")
+
+RetroBishop = Pastbishop %>%
+  filter(Host.Species=="retrocurva")
+BishopRetroPast<-RetroBishop$pasteuria.inf.density
+PastBishopRetroDate <- RetroBishop$Date
+strptime(PastBishopRetroDate, format = "%m/%d/%y")
+BishopRetrol <- as.POSIXct(PastBishopRetroDate,format="%m/%d/%y",tz=Sys.timezone())
+
+PastDentBishop = Pastbishop %>%
+  filter(Host.Species=="dentifera")
+BishopDentPast<-PastDentBishop$pasteuria.inf.density
+PastBishopDentDate <- PastDentBishop$Date
+strptime(PastBishopDentDate, format = "%m/%d/%y")
+PastBishopDentl <- as.POSIXct(PastBishopDentDate,format="%m/%d/%y",tz=Sys.timezone())
+
+PastBishopDate <- Pastbishop$Date
+strptime(PastBishopDate, format = "%m/%d/%y")
+PastBishopl <- as.POSIXct(PastBishopDate,format="%m/%d/%y",tz=Sys.timezone())
+PastBishopDentiferaTot<-Pastbishop$Dentifera.density
+PastBishopRetroTot<-Pastbishop$Retrocurva.density
+BishopPast<-Pastbishop$pasteuria.inf.density
+
+bishop.past <- ggplot() +
+  geom_point(data=Pastbishop,aes(x=PastBishopl,y=log10(PastBishopDentiferaTot+1), group=1, 
+                                 color="Dentifera Total Density"), size=3) +
+  geom_line(data=Pastbishop,aes(x=PastBishopl,y=log10(PastBishopDentiferaTot+1), group=1, 
+                                color="Dentifera Total Density"), size=2)+
+  geom_point(data=Pastbishop,aes(x=PastBishopl,y=log10(PastBishopRetroTot+1), group=1, 
+                                 color="Retrocurva Total Density"), size=3) +
+  geom_line(data=Pastbishop,aes(x=PastBishopl,y=log10(PastBishopRetroTot+1), group=1, 
+                                color="Retrocurva Total Density"), size=2)+
+  geom_area(data=RetroBishop,aes(x=BishopRetrol,y=log10(BishopRetroPast+1), group=1, 
+                                 fill="Retrocurva Infected Density"), size=3, alpha=.5) +
+  geom_area(data=PastDentBishop,aes(x=PastBishopDentl,y=log10(BishopDentPast+1), group=1, 
+                                    fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +  
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Bishop:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=2,byrow=TRUE))+
+  guides(color=guide_legend(nrow=2,byrow=TRUE))
+
+bishop.past
+```
+
+```{r,message=F,warning=F}
+# Mill Lake - Pasteuria ramosa
+PastMill = a %>%
+  filter(Host.Species=="retrocurva"| Host.Species=="dentifera"|Host.Species=="parvula", 
+         Lake== "Mill")
+
+PastMillRetro = PastMill %>%
+  filter(Host.Species=="retrocurva")
+MillRetroPast<-PastMillRetro$pasteuria.inf.density
+PastMillRetroDate <- PastMillRetro$Date
+strptime(PastMillRetroDate, format = "%m/%d/%y")
+PastMillRetrol <- as.POSIXct(PastMillRetroDate,format="%m/%d/%y",tz=Sys.timezone())
+
+PastMillDent = PastMill %>%
+  filter(Host.Species=="dentifera")
+MillDentPast<-PastMillDent$pasteuria.inf.density
+PastMillDentDate <- PastMillDent$Date
+strptime(PastMillDentDate, format = "%m/%d/%y")
+PastMillDentl <- as.POSIXct(PastMillDentDate,format="%m/%d/%y",tz=Sys.timezone())
+
+PastMillParv = PastMill %>%
+  filter(Host.Species=="parvula")
+MillParvPast<-PastMillParv$pasteuria.inf.density
+PastMillParvDate <- PastMillParv$Date
+strptime(PastMillParvDate, format = "%m/%d/%y")
+PastMillParvl <- as.POSIXct(PastMillParvDate,format="%m/%d/%y",tz=Sys.timezone())
+
+PastMillDate <- PastMill$Date
+strptime(PastMillDate, format = "%m/%d/%y")
+PastMilll <- as.POSIXct(PastMillDate,format="%m/%d/%y",tz=Sys.timezone())
+PastMillDentiferaTot<-PastMill$Dentifera.density
+PastMillRetroTot<-PastMill$Retrocurva.density
+PastMillParvTot<-PastMill$Parvula.density
+MillPast<-PastMill$pasteuria.inf.density
+
+mill.past <- ggplot() +
+  geom_point(data=PastMill,aes(x=PastMilll,y=log10(PastMillDentiferaTot+1), group=1, 
+                               color="Dentifera Total Density"), size=3) +
+  geom_line(data=PastMill,aes(x=PastMilll,y=log10(PastMillDentiferaTot+1), group=1, 
+                              color="Dentifera Total Density"), size=2)+
+  geom_point(data=PastMill,aes(x=PastMilll,y=log10(PastMillRetroTot+1), group=1, 
+                               color="Retrocurva Total Density"), size=3) +
+  geom_line(data=PastMill,aes(x=PastMilll,y=log10(PastMillRetroTot+1), group=1, 
+                              color="Retrocurva Total Density"), size=2)+
+  geom_point(data=PastMill,aes(x=PastMilll,y=log10(PastMillParvTot+1), group=1, 
+                               color="Parvula Total Density"), size=3) +
+  geom_line(data=PastMill,aes(x=PastMilll,y=log10(PastMillParvTot+1), group=1, 
+                              color="Parvula Total Density"), size=2)+
+  geom_area(data=PastMillRetro,aes(x=PastMillRetrol,y=log10(MillRetroPast+1), group=1, 
+                                   fill="Retrocurva Infected Density"), size=3, alpha=.5) +
+  geom_area(data=PastMillDent,aes(x=PastMillDentl,y=log10(MillDentPast+1), group=1, 
+                                  fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  geom_area(data=PastMillParv,aes(x=PastMillParvl,y=log10(MillParvPast+1), group=1, 
+                                  fill="Parvula Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Mill:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=3,byrow=TRUE))+
+  guides(color=guide_legend(nrow=3,byrow=TRUE))
+
+mill.past
+```
+
+```{r,message=F,warning=F}
+# Little Appleton - Pasteuria ramosa
+PastLilAp = a %>%
+  filter(Host.Species=="ceriodaphnia"| Host.Species=="dentifera", 
+         Lake== "LittleAppleton")
+
+PastLilApCerio = PastLilAp %>%
+  filter(Host.Species=="ceriodaphnia")
+LilApCerioPast<-PastLilApCerio$pasteuria.inf.density
+PastLilApCerioDate <- PastLilApCerio$Date
+strptime(PastLilApCerioDate, format = "%m/%d/%y")
+PastLilApCeriol <- as.POSIXct(PastLilApCerioDate,format="%m/%d/%y",tz=Sys.timezone())
+
+PastLilApDent = PastLilAp %>%
+  filter(Host.Species=="dentifera")
+LilApDentPast<-PastLilApDent$pasteuria.inf.density
+PastLilApDentDate <- PastLilApDent$Date
+strptime(PastLilApDentDate, format = "%m/%d/%y")
+PastLilApDentl <- as.POSIXct(PastLilApDentDate,format="%m/%d/%y",tz=Sys.timezone())
+
+PastLilApDate <- PastLilAp$Date
+strptime(PastLilApDate, format = "%m/%d/%y")
+PastLilApl <- as.POSIXct(PastLilApDate,format="%m/%d/%y",tz=Sys.timezone())
+PastLilApDentiferaTot<-PastLilAp$Dentifera.density
+PastLilApCerioTot<-PastLilAp$Ceriodaphnia.density
+LilApPast<-PastLilAp$pasteuria.inf.density
+
+LilAp.past <- ggplot() +
+  geom_point(data=PastLilAp,aes(x=PastLilApl,y=log10(PastLilApDentiferaTot+1), group=1, 
+                                color="Dentifera Total Density"), size=3) +
+  geom_line(data=PastLilAp,aes(x=PastLilApl,y=log10(PastLilApDentiferaTot+1), group=1, 
+                               color="Dentifera Total Density"), size=2)+
+  geom_point(data=PastLilAp,aes(x=PastLilApl,y=log10(PastLilApCerioTot+1), group=1, 
+                                color="Cerio Total Density"), size=3) +
+  geom_line(data=PastLilAp,aes(x= PastLilApl,y=log10(PastLilApCerioTot+1), group=1, 
+                               color="Cerio Total Density"), size=2)+
+  geom_area(data=PastLilApCerio,aes(x=PastLilApCeriol,y=log10(LilApCerioPast+1), group=1, 
+                                    fill="Cerio Infected Density"), size=3, alpha=.8) +
+  geom_area(data=PastLilApDent,aes(x=PastLilApDentl,y=log10(LilApDentPast+1), group=1, 
+                                   fill="Dentifera Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Little Appleton:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=2,byrow=TRUE))+
+  guides(color=guide_legend(nrow=2,byrow=TRUE))
+
+LilAp.past
+```
+
+```{r,message=F,warning=F}
+# Crooked W Lake - Pasteuria ramosa
+PastCrookedW = a %>%
+  filter(Host.Species=="retrocurva", 
+         Lake== "CrookedW")
+
+PastCrookedWDate <- PastCrookedW$Date
+strptime(PastCrookedWDate, format = "%m/%d/%y")
+PastCrookedWl <- as.POSIXct(PastCrookedWDate,format="%m/%d/%y",tz=Sys.timezone())
+PastCrookedWRetroTot<-PastCrookedW$Retrocurva.density
+CrookedWPast<-PastCrookedW$pasteuria.inf.density
+
+crookedw.past <- ggplot(PastCrookedW) +
+  geom_point(aes(x=PastCrookedWl,y=log10(PastCrookedWRetroTot+1), group=1, 
+                 color="Retrocurva Total Density"), size=3) +
+  geom_line(aes(x=PastCrookedWl,y=log10(PastCrookedWRetroTot+1), group=1, 
+                color="Retrocurva Total Density"), size=2)+
+  geom_area(aes(x=PastCrookedWl,y=log10(CrookedWPast+1), group=1, 
+                fill="Retrocurva Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Crooked W:"), bolditalic(" P. ramosa")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=1,byrow=TRUE))+
+  guides(color=guide_legend(nrow=1,byrow=TRUE))
+
+crookedw.past
+```
+
+```{r,message=F,warning=F}
+# Bishop Lake - Blastulidium paedophthorum
+Broodbishop = a %>%
+  filter(Host.Species=="ceriodaphnia"| Host.Species=="dubia", 
+         Lake== "Bishop")
+
+BroodCerioBishop = Broodbishop %>%
+  filter(Host.Species=="ceriodaphnia")
+CerioBishopBrood<-BroodCerioBishop$brood.inf.density
+BroodCerioBishopDate <- BroodCerioBishop$Date
+strptime(BroodCerioBishopDate, format = "%m/%d/%y")
+BroodCerioBishopl <- as.POSIXct(BroodCerioBishopDate,format="%m/%d/%y",tz=Sys.timezone())
+
+BroodDubiaBishop = Broodbishop %>%
+  filter(Host.Species=="dubia")
+DubiaBishopBrood<-BroodDubiaBishop$brood.inf.density
+BroodDubiaBishopDate <- BroodDubiaBishop$Date
+strptime(BroodDubiaBishopDate, format = "%m/%d/%y")
+BroodDubiaBishopl <- as.POSIXct(BroodDubiaBishopDate,format="%m/%d/%y",tz=Sys.timezone())
+
+BroodBishopDate <- Broodbishop$Date
+strptime(BroodBishopDate, format = "%m/%d/%y")
+BroodBishopl <- as.POSIXct(BroodBishopDate,format="%m/%d/%y",tz=Sys.timezone())
+BroodBishopDubiaTot<-Broodbishop$Dubia.density
+BroodBishopCerioTot<-Broodbishop$Ceriodaphnia.density
+BishopBrood<-Broodbishop$brood.inf.density
+
+bishop.brood <- ggplot() +
+  geom_point(data=Broodbishop,aes(x=BroodBishopl,y=log10(BroodBishopCerioTot+1), group=1, 
+                                  color="Cerio Total Density"), size=3) +
+  geom_line(data=Broodbishop,aes(x=BroodBishopl,y=log10(BroodBishopCerioTot+1), group=1, 
+                                 color="Cerio Total Density"), size=2)+
+  geom_point(data=Broodbishop,aes(x=BroodBishopl,y=log10(BroodBishopDubiaTot+1), group=1, 
+                                  color="Dubia Total Density"), size=3) +
+  geom_line(data=Broodbishop,aes(x=BroodBishopl,y=log10(BroodBishopDubiaTot+1), group=1, 
+                                 color="Dubia Total Density"), size=2)+
+  geom_area(data=BroodCerioBishop,aes(x=BroodCerioBishopl,y=log10(CerioBishopBrood+1), group=1, 
+                                      fill="Cerio Infected Density"), size=3, alpha=.5) +
+  geom_area(data=BroodDubiaBishop,aes(x=BroodDubiaBishopl,y=log10(DubiaBishopBrood+1), group=1, 
+                                      fill="Dubia Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Bishop:"), bolditalic(" B. paedophthorum")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=2,byrow=TRUE))+
+  guides(color=guide_legend(nrow=2,byrow=TRUE))
+
+bishop.brood
+```
+
+```{r,message=F,warning=F}
+# Walsh Lake - Blastulidium paedophthorum
+BroodWalsh = a %>%
+  filter(Host.Species=="parvula", 
+         Lake== "Walsh")
+
+BroodWalshParv = BroodWalsh %>%
+  filter(Host.Species=="parvula")
+WalshParvBrood<-BroodWalshParv$brood.inf.density
+BroodWalshParvDate <- BroodWalshParv$Date
+strptime(BroodWalshParvDate, format = "%m/%d/%y")
+BroodWalshParvl <- as.POSIXct(BroodWalshParvDate,format="%m/%d/%y",tz=Sys.timezone())
+
+BroodWalshDate <- BroodWalsh$Date
+strptime(BroodWalshDate, format = "%m/%d/%y")
+BroodWalshl <- as.POSIXct(BroodWalshDate,format="%m/%d/%y",tz=Sys.timezone())
+BroodWalshParvTot<-BroodWalsh$Parvula.density
+WalshBrood<-BroodWalsh$brood.inf.density
+
+walsh.brood <- ggplot() +
+  geom_point(data=BroodWalsh,aes(x=BroodWalshl,y=log10(BroodWalshParvTot+1), group=1, 
+                                 color="Parvula Total Density"), size=3) +
+  geom_line(data=BroodWalsh,aes(x=BroodWalshl,y=log10(BroodWalshParvTot+1), group=1, 
+                                color="Parvula Total Density"), size=2)+
+  geom_area(data=BroodWalshParv,aes(x=BroodWalshParvl,y=log10(WalshParvBrood+1), group=1, 
+                                    fill="Parvula Infected Density"), size=3, alpha=.5) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Walsh:"), bolditalic(" B. paedophthorum")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=3,byrow=TRUE))+
+  guides(color=guide_legend(nrow=3,byrow=TRUE))
+
+walsh.brood
+```
+
+```{r,message=F,warning=F}
+# Cedar Lake - Blastulidium paedophthorum
+BroodCedar = a %>%
+  filter(Host.Species=="pulicaria", 
+         Lake== "Cedar")
+
+BroodCedarDate <- BroodCedar$Date
+strptime(BroodCedarDate, format = "%m/%d/%y")
+BroodCedarl <- as.POSIXct(BroodCedarDate,format="%m/%d/%y",tz=Sys.timezone())
+BroodCedarPulicTot<-BroodCedar$Pulicaria.density
+CedarBrood<-BroodCedar$brood.inf.density
+
+cedar.brood <- ggplot(BroodCedar) +
+  geom_point(aes(x=BroodCedarl,y=log10(BroodCedarPulicTot+1), group=1, color="Pulicaria Total Density"), size=3) +
+  geom_line(aes(x=BroodCedarl,y=log10(BroodCedarPulicTot+1), group=1, color="Pulicaria Total Density"), size=2)+
+  geom_area(aes(x=BroodCedarl,y=log10(CedarBrood+1), group=1, 
+                fill="Pulicaria Infected Density"), size=3, alpha=.4) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_datetime(limits = c(as.POSIXct(as.Date("2021-06-07")), as.POSIXct(as.Date("2021-11-13"))))+
+  scale_colour_manual(values = cols)+
+  scale_fill_manual(values=cols2)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle(expression(paste(bold("Cedar:"), bolditalic(" B. paedophthorum")))) +
+  theme(plot.title = element_text(face = "bold",size = 24)) +
+  theme(axis.text=element_text(size=24, face = "bold"), 
+        axis.title=element_text(size=24,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 18),
+        legend.text=element_text(size=16,face="bold"),
+        legend.position = "none") +  
+  labs(x = (""), y="Density", fill="Fill",color="Color")+
+  guides(fill=guide_legend(nrow=1,byrow=TRUE))+
+  guides(color=guide_legend(nrow=1,byrow=TRUE))
+
+cedar.brood
+```
+
+```{r,message=F,warning=F}
+blank <- ggplot()+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+leg <- get_legend(bishop.micG)
+bishop.micG <- bishop.micG + theme(legend.position = "none")
+combined = ggarrange(walsh.brood, bishop.brood, cedar.brood,cedar.micG,
+                     walsh.micG,bishop.micG,mill.micG,crookedw.micG,
+                     LilAp.past, bishop.past, mill.past, crookedw.past,
+                     walsh.metsch,blank, leg,
+                     nrow = 4, ncol = 4)
+combined = annotate_figure(combined,
+                           left = text_grob("     Obligate Killers                                  Continuous Shedders", color = "#0072B2", face = "bold", size = 40,rot=90),
+                           top = text_grob("", color = "black", face = "bold", size = 30))+
+  annotation_custom(
+    grid.polygon(x=c(0,1),
+                 y=c(0.5,0.5),
+                 gp = gpar(lwd = 5)))
+combined
+
+#### saving combined plot
+ggsave(here("figures", "Combined_Plot_Total_Host_Density_and_Infected_Host_Density.jpg"), combined, units = "in", width = 20, height = 20, dpi = 300)
+```
