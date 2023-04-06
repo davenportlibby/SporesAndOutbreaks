@@ -20,9 +20,9 @@ During the review process, data and code were posted at:
 # Spore Concentrations and Outbreak Data
 Data and code for 2021 field study led by Elizabeth Davenport
 
-Citation: How does parasite environmental transmission stage concentration before, during, and after outbreaks?
+Citation: How does parasite environmental transmission stage concentration change before, during, and after outbreaks?
 
-Authors: Elizabeth S. Davenport 1*, Marcin K. Dziuba 1, Logan E. Jacobson 1, Siobhan C. Calhoun 1, Kira J. Monell 1, and Meghan A. Duffy 1
+Authors: Elizabeth S. Davenport 1*, Marcin K. Dziuba 1, Logan E. Jacobson 1, Siobhan K. Calhoun 1, Kira J. Monell 1, and Meghan A. Duffy 1
         1 Department of Ecology & Evolutionary Biology, University of Michigan, Ann Arbor, MI 48109, USA
 
 Contact: * Author responsible for writing code related to analyses and figures: davenpe@umich.edu
