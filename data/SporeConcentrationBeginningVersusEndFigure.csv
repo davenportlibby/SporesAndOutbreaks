@@ -1,0 +1,27 @@
+﻿Lake,HostSpecies,Parasite,Date,SporeConcentration,LogSporeConcentrationPlus1,OutbreakStatus,OutbreakID
+Walsh,Dentifera,M. bicuspidata,9/20/21,3347.55,3.524856788,Start,1
+Cedar,Pulicaria,B. paedophthorum,7/6/21,2894.207143,3.461679642,Start,2
+Bishop,Cerio and Dubia,B. paedophthorum,9/15/21,27776.57847,4.443694383,Start,3
+Walsh,Parvula,B. paedophthorum,8/23/21,12963.92308,4.112769944,Start,4
+Crooked W,Dentifera,O. pajunii,7/6/21,1405.5625,3.148159035,Start,5
+Mill,Dentifera,O. pajunii,8/9/21,534.06,2.728402485,Start,6
+Cedar,Dentifera,O. pajunii,7/6/21,440.1357143,2.64457222,Start,7
+Bishop,Dentifera,O. pajunii,7/7/21,116.8166667,2.071206731,Start,8
+Walsh,Dentifera,O. pajunii,7/12/21,82.56,1.921998431,Start,9
+LilAp,Dentifera,P. ramosa,9/15/21,396.2142857,2.599024859,Start,10
+Crooked W,Retrocurva,P. ramosa,10/25/21,73.71428571,1.873403649,Start,11
+Mill,Retrocurva,P. ramosa,8/23/21,1543.241333,3.188715173,Start,12
+Bishop,Retrocurva,P. ramosa,8/18/21,242.1821429,2.385931681,Start,13
+Walsh,Dentifera,M. bicuspidata,11/12/21,1219.664286,3.086596238,End,1
+Cedar,Pulicaria,B. paedophthorum,8/16/21,21266.95996,4.327725834,End,2
+Bishop,Cerio and Dubia,B. paedophthorum,11/10/21,8297.482353,3.918998675,End,3
+Walsh,Parvula,B. paedophthorum,10/4/21,12512.07857,4.097364172,End,4
+Crooked W,Dentifera,O. pajunii,11/8/21,58.97142857,1.777944394,End,5
+Mill,Dentifera,O. pajunii,11/1/21,308.6785714,2.490911155,End,6
+Cedar,Dentifera,O. pajunii,11/8/21,192.69375,2.287115607,End,7
+Bishop,Dentifera,O. pajunii,11/10/21,72.84705882,1.868333203,End,8
+Walsh,Dentifera,O. pajunii,11/12/21,161.5571429,2.211006058,End,9
+LilAp,Dentifera,P. ramosa,11/10/21,44.22857143,1.655412871,End,10
+Crooked W,Retrocurva,P. ramosa,11/8/21,58.66428571,1.775714446,End,11
+Mill,Retrocurva,P. ramosa,11/12/21,0,0,End,12
+Bishop,Retrocurva,P. ramosa,11/10/21,133.0470588,2.127257289,End,13
