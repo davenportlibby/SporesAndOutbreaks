@@ -1,0 +1,25 @@
+﻿Lake,Parasite,Mean,SD,Outbreak
+Walsh,M. bicuspidata,2.617776206,1.181018784,Yes
+LilAp,M. bicuspidata,1.644036851,0.892654911,No
+Cedar,M. bicuspidata,1.41707464,0.749119363,No
+Mill,M. bicuspidata,1.823763721,1.045459504,No
+CrookedW,M. bicuspidata,1.907578698,1.907578698,No
+Bishop,M. bicuspidata,1.382499973,0.621380708,No
+LilAp,P. ramosa,1.704359109,0.886151079,Yes
+CrookedW,P. ramosa,1.609362235,0.828144674,Yes
+Mill,P. ramosa,1.440137388,1.157267306,Yes
+Cedar,P. ramosa,2.001270886,0.701516762,No
+Bishop,P. ramosa,2.047786901,0.639466545,Yes
+Walsh,P. ramosa,2.817974863,1.045083961,No
+LilAp,B. paedophthorum,1.562156165,0.864730031,No
+CrookedW,B. paedophthorum,1.779052402,1.174737311,No
+Mill,B. paedophthorum,2.46799363,1.350733365,No
+Cedar,B. paedophthorum,3.822102046,0.481117529,Yes
+Bishop,B. paedophthorum,2.695478938,1.681142405,Yes
+Walsh,B. paedophthorum,3.051526912,0.866428268,Yes
+LilAp,O. pajunii,1.905566042,0.348350809,No
+CrookedW,O. pajunii,2.720207128,0.767975376,Yes
+Mill,O. pajunii,2.510779978,0.720790577,Yes
+Cedar,O. pajunii,3.085527953,0.44239676,Yes
+Bishop,O. pajunii,2.417989459,0.436174712,Yes
+Walsh,O. pajunii,3.192113096,1.644018626,Yes
