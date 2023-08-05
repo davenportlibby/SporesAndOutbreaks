@@ -1,0 +1,195 @@
+---
+title: "HostDensityTimeLags"
+author: "Elizabeth Davenport"
+date: '2023-08-04'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Initial stuff, including loading packages and importing data
+
+##loading packages
+```{r,message=F,warning=F}
+library(here)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(ggpubr)
+library(reshape2)
+library(rstatix)
+library(forecast)
+library(zoo)
+```
+
+## loading files
+
+```{r,message=F,warning=F}
+# Tell R where files are stored
+here::i_am("scripts/HostDensityTimeLags.Rmd")
+
+# Load Files
+a <- readr::read_csv(here("data/Walsh_Metsch_DentiferaDensity.csv"))
+b <- readr::read_csv(here("data/Pasteuria_density_percentinfection.csv"))
+c <- readr::read_csv(here("data/Brood_Density_PercentInfection.csv"))
+d <- readr::read_csv(here("data/MicG_Density_Percent_Infection.csv"))
+```
+
+```{r,message=F,warning=F}
+## Walsh Metschnikowia Daphnia dentifera
+q <- a$Dent.density
+i <- a$PercentInfected
+Ccf(q, i, main = "Density vs. Infections")
+ccfvalues = ccf(q,i)
+ccfvalues
+## no significant cross correlation
+```
+
+```{r,message=F,warning=F}
+## Walsh MicG dentifera
+
+wo = d %>%
+  filter(Lake=="Walsh")
+wos <- wo$Dent.density
+woi <- wo$Dent.PerInf
+
+Ccf(wos, woi, main = "Density vs. Infections")
+ccfvalues = ccf(wos,woi)
+ccfvalues
+## no significant cross correlation
+```
+
+```{r,message=F,warning=F}
+## Crooked W MicG dentifera
+cwo = d %>%
+  filter(Lake=="CrookedW")
+cwos <- cwo$Dent.density
+cwoi <- cwo$Dent.PerInf
+
+Ccf(cwos, cwoi, main = "Density vs. Infections")
+ccfvalues = ccf(cwos,cwoi)
+ccfvalues
+## significant for time lag k = -3
+```
+
+```{r,message=F,warning=F}
+##Mill MicG dentifera
+mo = d %>%
+  filter(Lake=="Mill")
+mos <- mo$Dent.density
+moi <- mo$Dent.PerInf
+
+Ccf(mos, moi, main = "Density vs. Infections")
+ccfvalues = ccf(mos,moi)
+ccfvalues
+## significant for time lag at k=-5
+# not biologically significant
+```
+
+```{r,message=F,warning=F}
+## Cedar MicG Dent
+co = d %>%
+  filter(Lake=="Cedar")
+cos <- co$Dent.density
+coi <- co$Dent.PerInf
+
+Ccf(cos, coi, main = "Density vs. Infections")
+ccfvalues = ccf(cos,coi)
+ccfvalues
+## significant for time lag k=-2
+```
+
+```{r,message=F,warning=F}
+##Bishop MicG dentifera
+bo = d %>%
+  filter(Lake=="Bishop")
+bos <- bo$Dent.density
+boi <- bo$Dent.PerInf
+
+Ccf(bos, boi, main = "Density vs. Infections")
+ccfvalues = ccf(bos,boi)
+ccfvalues
+## significant for time lag k=-5
+# not biologically significant
+```
+
+```{r,message=F,warning=F}
+## LilAp Past Dent
+lp = b %>%
+  filter(Lake=="LilAp")
+lps <- lp$Dent.density
+lpi <- lp$Dent.PerInf
+
+Ccf(lps, lpi, main = "Density vs. Infections")
+ccfvalues = ccf(lps,lpi)
+ccfvalues
+## significant for time lag k=-5
+#not biologically significant
+```
+
+```{r,message=F,warning=F}
+## Crooked W Past Retro 
+cwp = b %>%
+  filter(Lake=="CrookedW")
+cwps <- cwp$Retro.density
+cwpi <- cwp$Retro.PerInf
+
+Ccf(cwps, cwpi, main = "Density vs. Infections")
+ccfvalues = ccf(cwps,cwpi)
+ccfvalues
+## significant time lag k=-4
+```
+
+```{r,message=F,warning=F}
+## Mill Past Retro
+mp = b %>%
+  filter(Lake=="Mill")
+mps <- mp$Retro.density
+mpi <- mp$Retro.PerInf
+
+Ccf(mps, mpi, main = "Density vs. Infections")
+ccfvalues = ccf(mps,mpi)
+ccfvalues
+## no significant cross correlation
+```
+
+```{r,message=F,warning=F}
+## Bishop Past Retro
+bp = b %>%
+  filter(Lake=="Bishop")
+bps <- bp$Retro.density
+bpi <- bp$Retro.PerInf
+
+Ccf(bps, bpi, main = "Density vs. Infections")
+ccfvalues = ccf(bps,bpi)
+ccfvalues
+## significant for k=0
+```
+
+```{r,message=F,warning=F}
+## Cedar Brood pulicaria
+#hosts not observed during portions of time series so not able to conduct this analysis
+```
+
+```{r,message=F,warning=F}
+## Bishop Brood dubia
+bb = c %>%
+  filter(Lake=="Bishop")
+bbs <- bb$Dubia.density
+bbi <- bb$Dubia.PerInf
+
+Ccf(bbs, bbi, main = "Density vs. Infections")
+ccfvalues = ccf(bbs,bbi)
+ccfvalues
+## significant for time lag k=-1
+## lag of 2 weeks
+```
+
+```{r,message=F,warning=F}
+## Walsh Brood parvula
+#hosts not observed during portions of time series so not able to conduct this analysis
+```

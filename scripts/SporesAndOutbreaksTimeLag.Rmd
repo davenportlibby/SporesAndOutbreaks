@@ -1,0 +1,204 @@
+---
+title: "Spores and Outbreaks Time Lag"
+author: "Elizabeth Davenport"
+date: '2023-06-12'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Initial stuff, including loading packages and importing data
+
+##loading packages
+```{r,message=F,warning=F}
+library(here)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(ggpubr)
+library(reshape2)
+library(rstatix)
+library(forecast)
+library(zoo)
+```
+
+```{r,message=F,warning=F}
+# Tell R where files are stored
+here::i_am("scripts/SporesAndOutbreaksTimeLag.Rmd")
+
+# Load Files
+a <- readr::read_csv(here("data/Walsh_Mean_Metsch_PercentInfected.csv"))
+b <- readr::read_csv(here("data/Pasteuria_Mean_Spores_and_Percent_Infected_Outbreak.csv"))
+c <- readr::read_csv(here("data/Brood_Mean_Spores_and_Percent_Infected_OutbreakSize.csv"))
+d <- readr::read_csv(here("data/MicG_Mean_Spores_and_Percent_Infected_OutbreakSize.csv"))
+```
+
+```{r,message=F,warning=F}
+## Walsh Metsch
+s <- a$Mean
+i <- a$PercentInfected
+
+Ccf(s, i, main = "Spores vs. Infections")
+ccfvalues = ccf(s,i)
+ccfvalues
+ ## significant for time lag of k=-2
+## sampling occurs every 2 weeks, so significant lag of 4 weeks
+```
+
+```{r,message=F,warning=F}
+## Walsh MicG dentifera
+
+wo = d %>%
+  filter(Lake=="Walsh")
+wos <- wo$Mean
+woi <- wo$Dent_Per_Inf
+
+Ccf(wos, woi, main = "Spores vs. Infections")
+ccfvalues = ccf(wos,woi)
+ccfvalues
+## significant for time lag k=1
+## infections 14 days ahead
+```
+
+```{r,message=F,warning=F}
+## Crooked W MicG dentifera
+cwo = d %>%
+  filter(Lake=="CrookedW")
+cwos <- cwo$Mean
+cwoi <- cwo$Dent_Per_Inf
+
+Ccf(cwos, cwoi, main = "Spores vs. Infections")
+ccfvalues = ccf(cwos,cwoi)
+ccfvalues
+## significant for time lag k = 3
+## infections 42 days ahead
+```
+
+```{r,message=F,warning=F}
+
+##Mill MicG dentifera
+mo = d %>%
+  filter(Lake=="Mill")
+mos <- mo$Mean
+moi <- mo$Dent_Per_Inf
+
+Ccf(mos, moi, main = "Spores vs. Infections")
+ccfvalues = ccf(mos,moi)
+ccfvalues
+## significant for time lag at k=2
+## infections 28 days ahead
+```
+
+```{r,message=F,warning=F}
+## Cedar MicG Dent
+
+co = d %>%
+  filter(Lake=="Cedar")
+cos <- co$Mean
+coi <- co$Dent_Per_Inf
+
+Ccf(cos, coi, main = "Spores vs. Infections")
+ccfvalues = ccf(cos,coi)
+ccfvalues
+## significant for time lag k=1
+## infections 14 days ahead
+```
+
+```{r,message=F,warning=F}
+
+##Bishop MicG dentifera
+bo = d %>%
+  filter(Lake=="Bishop")
+bos <- bo$Mean
+boi <- bo$Dent_Per_Inf
+
+Ccf(bos, boi, main = "Spores vs. Infections")
+ccfvalues = ccf(bos,boi)
+ccfvalues
+## significant for time lag k=0 and 1
+## highest value for 0
+```
+
+```{r,message=F,warning=F}
+
+## LilAp Past Dent
+lp = b %>%
+  filter(Lake=="LilAp")
+lps <- lp$Mean
+lpi <- lp$Dent_Per_Inf
+
+Ccf(lps, lpi, main = "Spores vs. Infections")
+ccfvalues = ccf(lps,lpi)
+ccfvalues
+## significant for time lag k=-1
+## lag of 2 weeks
+```
+
+```{r,message=F,warning=F}
+## Crooked W Past Retro 
+cwp = b %>%
+  filter(Lake=="CrookedW")
+cwps <- cwp$Mean
+cwpi <- cwp$Retro_Per_Inf
+
+Ccf(cwps, cwpi, main = "Spores vs. Infections")
+ccfvalues = ccf(cwps, cwpi)
+ccfvalues
+## no significant time lag 
+```
+
+```{r,message=F,warning=F}
+## Mill Past Retro
+mp = b %>%
+  filter(Lake=="Mill")
+mps <- mp$Mean
+mpi <- mp$Retro_Per_Inf
+
+Ccf(mps, mpi, main = "Spores vs. Infections")
+ccfvalues = ccf(mps,mpi)
+ccfvalues
+## significant for time lag k=-1
+## lag of 2 weeks
+```
+
+```{r,message=F,warning=F}
+## Bishop Past Retro
+bp = b %>%
+  filter(Lake=="Bishop")
+bps <- bp$Mean
+bpi <- bp$Retro_Per_Inf
+
+Ccf(bps, bpi, main = "Spores vs. Infections")
+ccfvalues = ccf(bps,bpi)
+ccfvalues
+## significant for time lag k=-2
+## lag of 4 weeks
+```
+
+```{r,message=F,warning=F}
+## Cedar Brood pulicaria
+## missing values for pulicaria because hosts of this species were not observed on some sampling dates
+```
+
+```{r,message=F,warning=F}
+## Bishop Brood dubia
+bb = c %>%
+  filter(Lake=="Bishop")
+bbs <- bb$Mean
+bbi <- bb$Dubia_Per_Inf
+
+Ccf(bbs, bbi, main = "Spores vs. Infections")
+ccfvalues = ccf(bbs,bbi)
+ccfvalues
+## significant for time lag k=1
+## lag of 2 weeks
+```
+
+```{r,message=F,warning=F}
+## Walsh Brood parvula
+## missing values for parvula because hosts of this species were not observed on some sampling dates
+```
+

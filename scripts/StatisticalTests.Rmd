@@ -1,0 +1,132 @@
+---
+title: "StatisticalTests"
+author: "Elizabeth Davenport"
+date: '2023-08-04'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Initial stuff, including loading packages and importing data
+
+##loading packages
+```{r,message=F,warning=F}
+library(here)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(ggpubr)
+library(reshape2)
+library(rstatix)
+```
+
+## loading files
+
+```{r,message=F,warning=F}
+# Tell R where files are stored
+here::i_am("scripts/StatisticalTests.Rmd")
+
+# Load Files
+a <- readr::read_csv(here("data/AvgDaysBetweenSporeIncreaseAndOutbreakStart.csv"))
+b <- readr::read_csv(here("data/DaysBetweenPeaks.csv"))
+c <- readr::read_csv(here("data/BroodOutbreakMeanStats.csv"))
+cc <- readr::read_csv(here("data/BroodOutbreakMeans.csv"))
+```
+
+```{r,message=F,warning=F}
+#comparing the number of days between the initial spore increase and the beginning of the disease outbreak
+#testing for a difference among parasite species
+p <- a$Parasite
+d <- a$DaysBetweenSporeIncreaseAndOutbreakStart
+l <- a$Lake
+
+## creating a data frame
+df1<- data.frame(l,p,d)
+
+## Kruskal-Wallis rank sum test
+kruskal.test(d ~ p, data = df1)
+## nonsignificant p = 0.2786
+```
+
+```{r,message=F,warning=F}
+#testing whether the number of days between the initial spore increase and the beginning of the disease outbreak is significantly different from 0 (with zero being the beginning of the outbreak)
+t.test(d, mu = 0)
+#significantly different from 0
+#spore increase occurs significantly earlier than the disease outbreak
+```
+
+```{r,message=F,warning=F}
+#comparing the number of days between the peaks in infection prevalence and spore concentration
+parasite <- b$Parasite
+days.between <- b$DaysBetweenPeaks
+lake <- b$Lake
+
+## creating a data frame
+df2<- data.frame(lake,parasite,days.between)
+
+## testing for significant differences among parasites
+kruskal.test(days.between ~ parasite, data = df2)
+## significant p = 0.02
+```
+
+```{r,message=F,warning=F}
+#### setting comparisons for wilcox test, for more specific stats
+my_comparisons <- list(c("MicG", "Pasteuria"), c("Brood","Pasteuria"), c("MicG","Brood"))
+
+## Wilcoxon Test
+wtest<-compare_means(days.between ~ parasite,  data = df2, method="wilcox.test", paired = FALSE)
+
+wop = df2 %>%
+  filter(p=="MicG"|p=="Pasteuria")
+
+res <- wilcox.test(days.between ~ parasite, data = wop,
+                   exact = FALSE)
+res
+#p = 0.01
+
+wbp = df2 %>%
+  filter(p=="Brood"|p=="Pasteuria")
+
+res2 <- wilcox.test(days.between ~ parasite, data = wbp,
+                   exact = FALSE)
+res2
+# p = 0.04
+
+wbo = df2 %>%
+  filter(p=="Brood"|p=="MicG")
+res3 <- wilcox.test(days.between ~ parasite, data = wbo,
+                    exact = FALSE)
+res3
+# p = 0.4
+
+```
+
+```{r,message=F,warning=F}
+#testing for a difference between the mean spore concentration in lakes with vs. without outbreaks
+#testing for normality of both groups
+ggqqplot(c$NoOutbreakMean)
+shapiro.test(c$NoOutbreakMean)
+ggqqplot(c$OutbreakMean)
+shapiro.test(c$OutbreakMean)
+
+#creating a dataframe
+df3<-as.data.frame(cc)
+
+m <- df3$RawMean
+o<-as.factor(df3$Outbreak)
+res.ftest <- var.test(m~o, data=df3)
+res.ftest
+
+#### No significant difference between the variances of the two sets of data so we can use a t-test
+
+#Two sample t-test
+no<- c$NoOutbreakMean
+yes<- c$OutbreakMean
+res <- t.test(no, yes, var.equal = TRUE)
+res
+```
+

@@ -1,0 +1,133 @@
+---
+title: "AfterOutbreakAndLakeMeans"
+author: "Elizabeth Davenport"
+date: '2023-08-04'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Initial stuff, including loading packages and importing data
+
+##loading packages
+```{r,message=F,warning=F}
+library(here)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(ggpubr)
+library(reshape2)
+library(rstatix)
+```
+
+## loading files
+
+```{r,message=F,warning=F}
+# Tell R where files are stored
+here::i_am("scripts/AfterOutbreaksAndLakeMeans.Rmd")
+
+# Load Files
+a <- readr::read_csv(here("data/SporeConcentrationBeginningVersusEnd.csv"))
+f <- readr::read_csv(here("data/SporeConcentrationBeginningVersusEndFigure.csv"))
+aa <- readr::read_csv(here("data/LakeSporeMeans.csv"))
+```
+
+```{r,message=F,warning=F}
+#Create figure comparing mean spore concentrations at the beginning of disease outbreaks versus the end of outbreaks
+parasite <- as.factor(f$Parasite)
+ID <- as.factor(f$OutbreakID)
+t <- as.factor(f$OutbreakStatus)
+logconc <- f$LogSporeConcentrationPlus1
+
+#Setting color scheme
+cols<- c("O. pajunii"= "#0072B2",
+          "P. ramosa"= "#CC79A7","B. paedophthorum"="#D55E00",
+          "M. bicuspidata"="#009E73")
+
+#Plot
+qq <- ggplot(f, aes(x=t,y=logconc, group = ID, color=parasite)) +
+  geom_point(aes(x=t,y=logconc, group=ID, color=parasite), size=2) +
+  geom_line(aes(x=t,y=logconc, group = ID, color=parasite),size = 1.5)+
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  scale_x_discrete(limits=c("Start","End"))+
+  scale_colour_manual(values = cols)+  
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle("Spore Concentration: Outbreak Start versus End") +
+  theme(plot.title = element_text(face = "bold",size = 14)) +
+  theme(axis.text=element_text(size=10, face = "bold"), 
+        axis.title=element_text(size=12,face="bold")) +
+  theme(legend.title = element_text(face = "bold",size = 12),
+        legend.text=element_text(size=8,face="bold.italic"),
+        legend.position = "bottom") +  
+  labs(x = ("Outbreak Status"), y="Log(Mean Spore Concentration + 1)", color="Parasite")+
+  guides(linetype=guide_legend(nrow=2,byrow=TRUE))+  
+  guides(color=guide_legend(nrow=2,byrow=TRUE))+
+  theme(legend.key.width = unit(1, "cm"))+
+  annotate(geom="text", x=0.5, y=6, label="(A)", size=8,
+         color="black")
+
+qq
+```
+
+```{r,message=F,warning=F}
+#Setting shape conditions for plot based on outbreak status
+s <- c("Yes"=16, "No"=1)
+
+#Lake means and factors
+m <- aa$Mean
+sd <- aa$SD
+p <- as.factor(aa$Parasite)
+l <- as.factor(aa$Lake)
+o <- as.factor(aa$Outbreak)
+
+#plot
+q <- ggplot(aa) +
+  geom_point(aes(x=p, y=m, group=l,color=p, shape=o), size=4) +
+  scale_x_discrete(limits=c("B. paedophthorum", "O. pajunii", "M. bicuspidata", "P. ramosa"))+
+  scale_y_continuous(limits = c(0,4.5), breaks = seq(0,4.5,1))+
+  scale_colour_manual(values = cols)+
+  scale_shape_manual(values=s)+
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle("Mean Spore Concentration and Outbreak Occurrence") +
+  theme(plot.title = element_text(face = "bold",size = 14)) +
+  theme(axis.text=element_text(size=10, face = "bold"), 
+        axis.title=element_text(size=12,face="bold"),
+        legend.title=element_text(size=12,face="bold"))+
+  theme(legend.position = "bottom") +
+  labs(x = (""), y=("Log(Mean Spore Concentration + 1)"), shape="Outbreak?")+
+  guides(color="none")+
+  annotate(geom="text", x=0.6, y=4.5, label="(B)", size=8,
+           color="black")
+
+q
+```
+
+```{r,message=F,warning=F}
+#Combining plots
+combined = ggarrange(qq,q,
+                     nrow = 1, ncol = 2,
+                     common.legend = FALSE,
+                     legend = "bottom")
+#### saving combined plot
+ggsave(here("figures", "CombinedOutbreakStatusSpores.jpg"), combined, units = "in", width = 11, height = 5, dpi = 300)
+```
+
+```{r,message=F,warning=F}
+#Statistical Test - Outbreak Start versus End
+b <- a$SporeConcentration_OutbreakStart
+e <- a$SporeConcentration_OutbreakEnds
+
+wilcox.test(b, e, paired=TRUE)
+```
